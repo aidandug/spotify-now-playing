@@ -8,7 +8,7 @@ for skipping tracks and play/pause if you want to hook them up.
 
 // ------- project structure ------- //
 
-/spotify_now_playing.ino      → main arduino sketch  
+/spotify_now_playing.ino      → main sketch  
 /secrets_template.h           → template for inserting your spotify + wifi credentials  
 /secrets.h                    → (you create this locally — should not be uploaded)  
 /README.md                    → you're reading it now :)
@@ -21,7 +21,7 @@ for skipping tracks and play/pause if you want to hook them up.
 
 - esp32 dev board  
 - 1.8" spi tft lcd (st7735)  
-- wi-fi connection  
+- stable wi-fi connection  
 - push buttons (optional)  
 - usb cable
 
