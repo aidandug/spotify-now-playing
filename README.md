@@ -99,7 +99,8 @@ curl -X POST https://accounts.spotify.com/api/token \
 but again — this does not give access to your playback info.
 you still need a refresh token for the actual display to work.
 
-extras
+--------- extras ---------
+
 // ------- optional button controls ------- //
 
 If you wire buttons, you can control playback:
@@ -123,12 +124,14 @@ display freezes mid-song
 -- try increasing delay between spotify api calls to avoid rate limits
 
 // ------- to-do / future ideas ------- //
+
 add volume control via rotary encoder
 auto-dim screen for saving power
 improve scrolling text effect
 cache album art to reduce api calls
 
 // ------- preview ------- //
+
 ![spotify now playing display](images/now-playing-example.jpg)
 
 // ------- license ------- //
