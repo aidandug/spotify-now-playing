@@ -29,7 +29,6 @@ unsigned long lastProgressUpdate = 0;
 unsigned long lastFetchTime = 0;
 
 int scrollSongX = 0;
-int scrollArtistX = 0;
 int songPixelWidth = 0;
 
 unsigned long lastScrollTime = 0;
@@ -39,16 +38,13 @@ bool pauseScrolling = false;
 void connectWiFi() {
   Serial.print("connecting to wifi...");
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-
   unsigned long startAttemptTime = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 15000) {
     delay(500);
     Serial.print(".");
   }
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nwifi connected");
-  } else {
+  if (WiFi.status() == WL_CONNECTED) Serial.println("\nwifi connected");
+  else {
     Serial.println("\nwifi failed, restarting...");
     delay(3000);
     ESP.restart();
@@ -89,7 +85,6 @@ void fetchSpotifyData() {
   if (accessToken == "" || (millis() - lastTokenRefreshTime) > 3600000) {
     if (!refreshAccessToken()) return;
   }
-
   HTTPClient http;
   http.begin("https://api.spotify.com/v1/me/player/currently-playing");
   http.addHeader("Authorization", "Bearer " + accessToken);
@@ -110,17 +105,14 @@ void fetchSpotifyData() {
     if (currentSong != lastSong) {
       lastSong = currentSong;
       scrollSongX = tft.width();
-      scrollArtistX = tft.width();
       animateScreenTransition();
       tft.fillScreen(ST77XX_BLACK);
       downloadAndDisplayAlbumArt(albumImageURL);
-
       int16_t x1, y1;
       uint16_t w, h;
       tft.setTextSize(2);
       tft.getTextBounds(currentSong, 0, 0, &x1, &y1, &w, &h);
       songPixelWidth = w;
-
       displayOnTFT();
     }
   } else if (httpResponseCode == 204) {
@@ -131,48 +123,60 @@ void fetchSpotifyData() {
   http.end();
 }
 
-void drawScrollingText(const String& text, uint16_t color, int scrollX, int y, int textWidth) {
-  tft.setTextSize(2);
-  tft.setTextWrap(false);
-  tft.setTextColor(color);
-
-  tft.setCursor(scrollX, y);
-  tft.print(text);
-}
-
 void displayOnTFT() {
-  int songY = 110;
-  int artistY = 125;
-  int progressY = 145;
+  int artistY = 105;
+  int songY = 85;
+  int progressY = tft.height() - 10;
 
-  tft.fillRect(0, songY, tft.width(), 16, ST77XX_BLACK);
-  if (songPixelWidth > tft.width()) {
-    drawScrollingText(currentSong, ST77XX_BLUE, scrollSongX, songY, songPixelWidth);
-  } else {
-    tft.setTextSize(2);
+  static String lastDisplayedArtist = "";
+  static String lastDisplayedSong = "";
+
+  if (currentArtist != lastDisplayedArtist) {
+    tft.fillRect(0, artistY, tft.width(), 10, ST77XX_BLACK);
+    tft.setTextSize(1);
     tft.setTextWrap(false);
-    tft.setTextColor(ST77XX_BLUE);
-    int16_t sx, sy;
-    uint16_t sw, sh;
-    tft.getTextBounds(currentSong, 0, 0, &sx, &sy, &sw, &sh);
-    tft.setCursor((tft.width() - sw) / 2, songY);
-    tft.print(currentSong);
+    tft.setTextColor(ST77XX_WHITE);
+    int16_t ax, ay;
+    uint16_t aw, ah;
+    tft.getTextBounds(currentArtist, 0, 0, &ax, &ay, &aw, &ah);
+    tft.setCursor((tft.width() - aw) / 2, artistY);
+    tft.print(currentArtist);
+    lastDisplayedArtist = currentArtist;
   }
 
-  tft.fillRect(0, artistY, tft.width(), 16, ST77XX_BLACK);
-  tft.setTextSize(1);
-  tft.setTextWrap(false);
-  tft.setTextColor(ST77XX_WHITE);
-  int16_t ax, ay;
-  uint16_t aw, ah;
-  tft.getTextBounds(currentArtist, 0, 0, &ax, &ay, &aw, &ah);
-  tft.setCursor((tft.width() - aw) / 2, artistY);
-  tft.print(currentArtist);
+  if (currentSong != lastDisplayedSong) {
+    tft.fillRect(0, songY, tft.width(), 16, ST77XX_BLACK);
+    if (songPixelWidth > tft.width()) {
+      drawScrollingText(currentSong, ST77XX_BLUE, scrollSongX, songY, songPixelWidth);
+    } else {
+      tft.setTextSize(2);
+      tft.setTextWrap(false);
+      tft.setTextColor(ST77XX_BLUE);
+      int16_t sx, sy;
+      uint16_t sw, sh;
+      tft.getTextBounds(currentSong, 0, 0, &sx, &sy, &sw, &sh);
+      tft.setCursor((tft.width() - sw) / 2, songY);
+      tft.print(currentSong);
+    }
+    lastDisplayedSong = currentSong;
+  }
 
   updateProgressBar(currentProgress, totalDuration, progressY);
 }
 
+void drawScrollingText(const String& text, uint16_t color, int scrollX, int y, int textWidth) {
+  tft.fillRect(0, y, tft.width(), 16, ST77XX_BLACK);
+  tft.setTextSize(2);
+  tft.setTextWrap(false);
+  tft.setTextColor(color);
+  tft.setCursor(scrollX, y);
+  tft.print(text);
+}
+
 void updateProgressBar(int progress, int duration, int barY) {
+  static int lastProgress = -1;
+  if (progress == lastProgress) return;
+  lastProgress = progress;
   int barHeight = 5;
   int barX = 5;
   int barMaxWidth = tft.width() - 10;
@@ -196,12 +200,10 @@ void downloadAndDisplayAlbumArt(String imageURL) {
   HTTPClient http;
   http.begin(imageURL);
   int httpResponseCode = http.GET();
-
   if (httpResponseCode == 200 && http.getSize() > 0) {
     WiFiClient* stream = http.getStreamPtr();
     File file = SPIFFS.open("/album.jpg", FILE_WRITE);
     if (!file) return;
-
     uint8_t buffer[512];
     while (stream->available()) {
       int len = stream->read(buffer, sizeof(buffer));
@@ -216,32 +218,29 @@ void downloadAndDisplayAlbumArt(String imageURL) {
 void decodeAndDrawImage(const char *filename) {
   File file = SPIFFS.open(filename, FILE_READ);
   if (!file) return;
-
   if (!JpegDec.decodeFsFile(file)) {
     file.close();
     return;
   }
-
-  float scale = 0.8;
-  int scaledHeight = JpegDec.height * scale;
-  int yOffset = (scaledHeight < 105) ? (105 - scaledHeight) / 2 : 0;
-  int xOffset = (tft.width() - (JpegDec.width * scale)) / 2;
+  float scale = 0.85;
+  int imageWidth = JpegDec.width * scale;
+  int imageHeight = JpegDec.height * scale;
+  int xOffset = (tft.width() - imageWidth) / 2;
+  int yOffset = 0;
   jpegRenderScaledNearest(xOffset, yOffset, scale);
   file.close();
 }
 
 void jpegRenderScaledNearest(int xpos, int ypos, float scale) {
-  const int maxArtHeight = 100;
   while (JpegDec.read()) {
     uint16_t *pImg = JpegDec.pImage;
     int mcuX = JpegDec.MCUx * JpegDec.MCUWidth;
     int mcuY = JpegDec.MCUy * JpegDec.MCUHeight;
-
     for (int y = 0; y < JpegDec.MCUHeight; y++) {
       for (int x = 0; x < JpegDec.MCUWidth; x++) {
         int sx = xpos + (mcuX + x) * scale;
         int sy = ypos + (mcuY + y) * scale;
-        if (sx < tft.width() && sy < maxArtHeight) {
+        if (sx < tft.width() && sy < tft.height()) {
           tft.drawPixel(sx, sy, pImg[y * JpegDec.MCUWidth + x]);
         }
       }
@@ -264,16 +263,15 @@ void showStartupScreen() {
   tft.println("launching...");
   tft.setCursor(10, 80);
   tft.println("spotify display");
-  tft.fillRect(0, 145, tft.width(), 10, ST77XX_BLACK);
 }
 
 void setup() {
   Serial.begin(115200);
   spi.begin(18, -1, 19);
   tft.initR(INITR_BLACKTAB);
+  tft.setRotation(1);
   tft.fillScreen(ST77XX_BLACK);
   showStartupScreen();
-
   connectWiFi();
   setupSPIFFS();
   if (!refreshAccessToken()) {
@@ -289,37 +287,29 @@ void setup() {
 
 void loop() {
   unsigned long now = millis();
-
   if (now - lastFetchTime >= 10000) {
     fetchSpotifyData();
     lastFetchTime = now;
   }
-
   if (lastSong != "" && now - lastProgressUpdate >= 1000 && currentProgress < totalDuration) {
     currentProgress += 1000;
     lastProgressUpdate = now;
-    updateProgressBar(currentProgress, totalDuration, 145);
+    updateProgressBar(currentProgress, totalDuration, tft.height() - 10);
   }
-
   if (lastSong != "") {
     if (pauseScrolling) {
       if (now - scrollPauseStart > 800) {
         scrollSongX = tft.width();
-        scrollArtistX = tft.width();
         pauseScrolling = false;
       }
     } else if (now - lastScrollTime >= 50) {
       lastScrollTime = now;
-
       if (songPixelWidth > tft.width()) {
         scrollSongX--;
         if (scrollSongX < -songPixelWidth) pauseScrolling = true;
       } else {
         scrollSongX = 5;
       }
-
-      
-
       if (!pauseScrolling) displayOnTFT();
       else scrollPauseStart = now;
     }
