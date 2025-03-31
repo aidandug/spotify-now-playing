@@ -14,7 +14,12 @@ design process video: https://www.youtube.com/watch?v=UWNBKuJdgTA
 /secrets.h                    → (you create this locally — should not be uploaded)  
 /README.md                    → you're reading it now :)
 
-models
+CAD files
+- [Download STEP File](./models/upper_case.step)
+- [Download STEP File](./models/lower_case.step)
+- [Download STEP File](./models/tft_rear.step)
+- [Download ZIP (includes STEP and others)](./models/models.zip)
+
 /lower_case.stl      → lower half of case  
 /upper_case.stl      → upper half of case  
 /tft_rear.stl        → TFT rear casing  
