@@ -15,10 +15,10 @@ design process video: https://www.youtube.com/watch?v=UWNBKuJdgTA
 /README.md                    → you're reading it now :)
 
 CAD files
-- [Download STEP File](./models/upper_case.step)
-- [Download STEP File](./models/lower_case.step)
-- [Download STEP File](./models/tft_rear.step)
-- [Download ZIP (includes STEP and others)](./models/models.zip)
+- [Download Case1 STEP File](./models/upper_case.step)
+- [Download Case2 STEP File](./models/lower_case.step)
+- [Download Case3 STEP File](./models/tft_rear.step)
+- [Download all 3 cases (ZIP)](./models/models.zip)
 
 /lower_case.stl      → lower half of case  
 /upper_case.stl      → upper half of case  
