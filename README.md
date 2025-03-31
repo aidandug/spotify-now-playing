@@ -7,6 +7,7 @@ for skipping tracks and play/pause if you want to hook them up.
 
 
 // ------- project structure ------- //
+design process video: [tutorial]([https://example.com](https://www.youtube.com/watch?v=UWNBKuJdgTA))
 
 /spotify_now_playing.ino      → main sketch  
 /secrets_template.h           → template for inserting your spotify + wifi credentials  
